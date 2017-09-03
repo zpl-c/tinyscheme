@@ -13,13 +13,13 @@ extern "C" {
  * Default values for #define'd symbols
  */
 #ifndef STANDALONE       /* If used as standalone interpreter */
-# define STANDALONE 1
+# define STANDALONE 0
 #endif
 
 #ifndef _MSC_VER
 # define USE_STRCASECMP 1
 # ifndef USE_STRLWR
-#   define USE_STRLWR 1
+#   define USE_STRLWR 0
 # endif
 # define SCHEME_EXPORT
 #else
@@ -76,7 +76,7 @@ extern "C" {
 #endif
 
 #ifndef USE_PLIST
-# define USE_PLIST 0
+# define USE_PLIST 1
 #endif
 
 /* To force system errors through user-defined error handling (see *error-hook*) */
@@ -153,7 +153,6 @@ pointer mk_real(scheme *sc, double num);
 pointer mk_symbol(scheme *sc, const char *name);
 pointer gensym(scheme *sc);
 pointer mk_string(scheme *sc, const char *str);
-pointer mk_memblock(scheme *sc, int len, char fill);
 pointer mk_counted_string(scheme *sc, const char *str, int len);
 pointer mk_empty_string(scheme *sc, int len, char fill);
 pointer mk_character(scheme *sc, int c);
@@ -177,7 +176,6 @@ struct scheme_interface {
   pointer (*mk_counted_string)(scheme *sc, const char *str, int len);
   pointer (*mk_character)(scheme *sc, int c);
   pointer (*mk_vector)(scheme *sc, int len);
-  pointer (*mk_memblock)(scheme *sc, int len, char fill);
   pointer (*mk_foreign_func)(scheme *sc, foreign_func f);
   void (*putstr)(scheme *sc, const char *s);
   void (*putcharacter)(scheme *sc, int c);
@@ -194,7 +192,6 @@ struct scheme_interface {
   long (*charvalue)(pointer p);
   int (*is_list)(scheme *sc, pointer p);
   int (*is_vector)(pointer p);
-  int (*is_memblock)(pointer p);
   int (*list_length)(scheme *sc, pointer vec);
   long (*vector_length)(pointer vec);
   void (*fill_vector)(pointer vec, pointer elem);

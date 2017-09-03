@@ -1,4 +1,4 @@
-/* T I N Y S C H E M E    1 . 5 0
+/* T I N Y S C H E M E    1 . 4 1
  *   Dimitrios Souflis (dsouflis@acm.org)
  *   Based on MiniScheme (original credits follow)
  * (MINISCM)               coded by Atsushi Moriwaki (11/5/1989)
@@ -19,7 +19,6 @@
 #endif
 #ifdef WIN32
 #define snprintf _snprintf
-# include <io.h>
 #endif
 #if USE_DL
 # include "dynload.h"
@@ -59,12 +58,11 @@
 
 #define BACKQUOTE '`'
 #define DELIMITERS  "()\";\f\t\v\n\r "
+#define prompt "> "
 
 /*
  *  Basic memory allocation units
  */
-
-#define banner "TinyScheme 1.5.0"
 
 #include <string.h>
 #include <stdlib.h>
@@ -87,14 +85,14 @@ static int stricmp(const char *s1, const char *s2)
 #endif /* __APPLE__ */
 
 #if USE_STRLWR
-#endif
-
-#ifndef prompt
-# define prompt "ts> "
-#endif
-
-#ifndef InitFile
-# define InitFile "init.scm"
+static const char *strlwr(char *s) {
+  const char *p=s;
+  while(*s) {
+    *s=tolower(*s);
+    s++;
+  }
+  return p;
+}
 #endif
 
 #ifndef FIRST_CELLSEGS
@@ -116,8 +114,7 @@ enum scheme_types {
   T_MACRO=12,
   T_PROMISE=13,
   T_ENVIRONMENT=14,
-  T_MEMBLOCK=15,
-  T_LAST_SYSTEM_TYPE=15
+  T_LAST_SYSTEM_TYPE=14
 };
 
 /* ADJ is enough slack to align cells in a TYPE_BITS-bit boundary */
@@ -161,11 +158,8 @@ static num num_one;
 #define type(p)          (typeflag(p)&T_MASKTYPE)
 
 INTERFACE INLINE int is_string(pointer p)     { return (type(p)==T_STRING); }
-INTERFACE INLINE int is_memblock(pointer p)   { return (type(p)==T_MEMBLOCK); }
 #define strvalue(p)      ((p)->_object._string._svalue)
 #define strlength(p)        ((p)->_object._string._length)
-#define membptr(p) ((p)->_object._memblock._ptr)
-#define memblen(p) ((p)->_object._memblock._len)
 
 INTERFACE static int is_list(scheme *sc, pointer p);
 INTERFACE INLINE int is_vector(pointer p)    { return (type(p)==T_VECTOR); }
@@ -1000,22 +994,6 @@ INTERFACE pointer mk_empty_string(scheme *sc, int len, char fill) {
      return (x);
 }
 
-INTERFACE pointer mk_memblock(scheme *sc, int len, char fill) {
-    pointer x;
-    char *p = (char *)sc->malloc(len);
-    
-    if (p==0) {
-        return sc->NIL;
-    }
-    x = get_cell(sc, sc->NIL, sc->NIL);
-    
-    typeflag(x) = T_MEMBLOCK|T_ATOM;
-    membptr(x) = p;
-    memblen(x) = len;
-    memset(p, fill, len);
-    return x;
-}
-
 INTERFACE static pointer mk_vector(scheme *sc, int len)
 { return get_vector_object(sc,len,sc->NIL); }
 
@@ -1331,8 +1309,6 @@ static void gc(scheme *sc, pointer a, pointer b) {
 static void finalize_cell(scheme *sc, pointer a) {
   if(is_string(a)) {
     sc->free(strvalue(a));
-  } else if (is_memblock(a)) {
-      sc->free(membptr(a));  
   } else if(is_port(a)) {
     if(a->_object._port->kind&port_file
        && a->_object._port->rep.stdio.closeit) {
@@ -1937,8 +1913,6 @@ static void atom2str(scheme *sc, pointer l, int f, char **pp, int *plen) {
           p = "#f";
      } else if (l == sc->EOF_OBJ) {
           p = "#<EOF>";
-     } else if (is_memblock(l)) {
-         p = "#<MEMBLOCK>";
      } else if (is_port(l)) {
           p = sc->strbuff;
           snprintf(p, STRBUFFSIZE, "#<PORT>");
@@ -3594,89 +3568,6 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op) {
           s_return(sc,car(sc->args));
      }
 
-     case OP_MKBLOCK: { /* make-block */
-        int fill=0;
-        int len;
-
-        if(!is_number(car(sc->args))) {
-            Error_1(sc, "make-block: not a number:", car(sc->args));
-        }
-        len=ivalue(car(sc->args));
-        if (len<=0) {
-            Error_1(sc, "make-block: not positive:", car(sc->args));
-        }
-
-        if (cdr(sc->args)!=sc->NIL) {
-            if(!is_number(cadr(sc->args)) || ivalue(cadr(sc->args))<0) {
-                Error_1(sc, "make-block: not a positive number:", cadr(sc->args));
-            }
-            fill=charvalue(cadr(sc->args))%255;
-        }
-        s_return(sc, mk_memblock(sc, len, (char)fill));
-     }
-
-    case OP_BLOCKLEN: { /* block-length */ 
-        if (!is_memblock(car(sc->args))) {
-            Error_1(sc, "block-length: not a memory block:", car(sc->args));
-        }
-        s_return(sc, mk_integer(sc, memblen(car(sc->args))));
-    }
-
-    case OP_BLOCKREF: { /* block-ref */ 
-        char *str;
-        int index;
-
-        if (!is_memblock(car(sc->args))) {
-            Error_1(sc, "block-length: not a memory block:", car(sc->args));
-        }
-        str=membptr(car(sc->args));
-
-        if (cdr(sc->args)==sc->NIL) {
-            Error_0(sc, "block-ref: needs two arguments");
-        }
-        if (!is_number(cadr(sc->args))) {
-            Error_1(sc, "make-block: not a number:", cadr(sc->args));
-        }
-        index=ivalue(cadr(sc->args));
-
-        if (index<0 || index>=memblen(car(sc->args))) {
-            Error_1(sc, "make-block: out of bounds:", cadr(sc->args));
-        }
-        s_return(sc, mk_integer(sc, str[index]));
-    }
-
-         case OP_BLOCKSET: { /* block-set! */
-          char *str;
-          int index;
-          int c;
-          if(!is_memblock(car(sc->args))) {
-               Error_1(sc,"block-set!: not a memory block:",car(sc->args));
-          }
-          if(is_immutable(car(sc->args))) {
-               Error_1(sc,"block-set!: unable to alter immutable memory block:",car(sc->args));
-          }
-          str=membptr(car(sc->args));
-          if(cdr(sc->args)==sc->NIL) {
-               Error_0(sc,"block-set!: needs three arguments");
-          }
-          if(!is_number(cadr(sc->args))) {
-               Error_1(sc,"block-set!: not a number:",cadr(sc->args));
-          }
-          index=ivalue(cadr(sc->args));
-          if(index<0 || index>=memblen(car(sc->args))) {
-               Error_1(sc,"block-set!: out of bounds:",cadr(sc->args));
-          }
-          if(cddr(sc->args)==sc->NIL) {
-               Error_0(sc,"block-set!: needs three arguments");
-          }
-          if(!is_integer(caddr(sc->args))) {
-               Error_1(sc,"block-set!: not an integer:",caddr(sc->args));
-          }
-          c=ivalue(caddr(sc->args))%255;
-          str[index]=(char)c;
-          s_return(sc,car(sc->args));
-     }
-
      default:
           snprintf(sc->strbuff,STRBUFFSIZE,"%d: illegal operator", sc->op);
           Error_0(sc,sc->strbuff);
@@ -3769,8 +3660,6 @@ static pointer opexe_3(scheme *sc, enum scheme_opcodes op) {
           s_retbool(is_number(car(sc->args)));
      case OP_STRINGP:     /* string? */
           s_retbool(is_string(car(sc->args)));
-     case OP_BLOCKP:
-          s_retbool((is_memblock(car(sc->args))));
      case OP_INTEGERP:     /* integer? */
           s_retbool(is_integer(car(sc->args)));
      case OP_REALP:     /* real? */
@@ -4477,7 +4366,6 @@ static struct {
 #define TST_NUMBER "\014"
 #define TST_INTEGER "\015"
 #define TST_NATURAL "\016"
-#define TST_MEMBLOCK "\017"
 
 typedef struct {
   dispatch_func func;
@@ -4648,7 +4536,7 @@ INTERFACE static pointer s_immutable_cons(scheme *sc, pointer a, pointer b) {
  return immutable_cons(sc,a,b);
 }
 
-static struct scheme_interface vtbl ={
+struct scheme_interface vtbl ={
   scheme_define,
   s_cons,
   s_immutable_cons,
@@ -4661,7 +4549,6 @@ static struct scheme_interface vtbl ={
   mk_counted_string,
   mk_character,
   mk_vector,
-  mk_memblock,
   mk_foreign_func,
   putstr,
   putcharacter,
@@ -4678,7 +4565,6 @@ static struct scheme_interface vtbl ={
   charvalue,
   is_list,
   is_vector,
-  is_memblock,
   list_length,
   ivalue,
   fill_vector,
@@ -5042,114 +4928,6 @@ pointer scheme_eval(scheme *sc, pointer obj)
   return sc->value;
 }
 
-
-#endif
-
-/* ========== Main ========== */
-
-#if STANDALONE
-
-#if defined(__APPLE__) && !defined (OSX)
-int main()
-{
-     extern MacTS_main(int argc, char **argv);
-     char**    argv;
-     int argc = ccommand(&argv);
-     MacTS_main(argc,argv);
-     return 0;
-}
-int MacTS_main(int argc, char **argv) {
-#else
-int main(int argc, char **argv) {
-#endif
-  scheme sc;
-  FILE *fin;
-  char *file_name=InitFile;
-  int retcode;
-  int isfile=1;
-
-  if(argc==1) {
-    printf(banner);
-  }
-  if(argc==2 && strcmp(argv[1],"-?")==0) {
-    printf("Usage: tinyscheme -?\n");
-    printf("or:    tinyscheme [<file1> <file2> ...]\n");
-    printf("followed by\n");
-    printf("          -1 <file> [<arg1> <arg2> ...]\n");
-    printf("          -c <Scheme commands> [<arg1> <arg2> ...]\n");
-    printf("assuming that the executable is named tinyscheme.\n");
-    printf("Use - as filename for stdin.\n");
-    return 1;
-  }
-  if(!scheme_init(&sc)) {
-    fprintf(stderr,"Could not initialize!\n");
-    return 2;
-  }
-  scheme_set_input_port_file(&sc, stdin);
-  scheme_set_output_port_file(&sc, stdout);
-#if USE_DL
-  scheme_define(&sc,sc.global_env,mk_symbol(&sc,"load-extension"),mk_foreign_func(&sc, scm_load_ext));
-#endif
-  argv++;
-#ifdef WIN32
-  if(_access(file_name,0)!=0) {
-#else
-  if(access(file_name,0)!=0) {
-#endif
-    char *p=getenv("TINYSCHEMEINIT");
-    if(p!=0) {
-      file_name=p;
-    }
-  }
-  do {
-    if(strcmp(file_name,"-")==0) {
-      fin=stdin;
-    } else if(strcmp(file_name,"-1")==0 || strcmp(file_name,"-c")==0) {
-      pointer args=sc.NIL;
-      isfile=file_name[1]=='1';
-      file_name=*argv++;
-      if(strcmp(file_name,"-")==0) {
-        fin=stdin;
-      } else if(isfile) {
-        fin=fopen(file_name,"r");
-      }
-      for(;*argv;argv++) {
-        pointer value=mk_string(&sc,*argv);
-        args=cons(&sc,value,args);
-      }
-      args=reverse_in_place(&sc,sc.NIL,args);
-      scheme_define(&sc,sc.global_env,mk_symbol(&sc,"*args*"),args);
-
-    } else {
-      fin=fopen(file_name,"r");
-    }
-    if(isfile && fin==0) {
-      fprintf(stderr,"Could not open file %s\n",file_name);
-    } else {
-      if(isfile) {
-        scheme_load_named_file(&sc,fin,file_name);
-      } else {
-        scheme_load_string(&sc,file_name);
-      }
-      if(!isfile || fin!=stdin) {
-        if(sc.retcode!=0) {
-          fprintf(stderr,"Errors encountered reading %s\n",file_name);
-        }
-        if(isfile) {
-          fclose(fin);
-        }
-      }
-    }
-    file_name=*argv++;
-  } while(file_name!=0);
-  if(argc==1) {
-    scheme_load_named_file(&sc,stdin,0);
-  }
-  retcode=sc.retcode;
-  scheme_deinit(&sc);
-
-  return retcode;
-}
 
 #endif
 

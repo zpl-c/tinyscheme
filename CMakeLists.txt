@@ -3,11 +3,8 @@ project(tinyscheme)
 
 find_package(Threads)
 
-if (STANDALONE)
-add_executable(tinyscheme scheme.c)
-else ()
-add_library(tinyscheme STATIC scheme.c)
-add_library(tinyscheme_dynamic SHARED scheme.c)
-endif ()
+add_executable(tinyscheme repl.c)
+add_executable(tinyscheme.test test.c)
 
 target_link_libraries(tinyscheme ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} m)
+target_link_libraries(tinyscheme.test ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} m)
