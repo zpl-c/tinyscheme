@@ -9,7 +9,7 @@
 
 #define JOIN2(a,b) a##b
 
-#define banner "TinyScheme 1.5.0"
+#define banner "TinyScheme 1.5.1"
 
 
 #if defined(__APPLE__) && !defined (OSX)
