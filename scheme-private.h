@@ -55,6 +55,10 @@ struct cell {
       struct cell *_car;
       struct cell *_cdr;
     } _cons;
+    struct {
+        char *_ptr;
+        int  _len;
+    } _memblock;
   } _object;
 };
 
@@ -157,6 +161,7 @@ enum scheme_opcodes {
 #define immutable_cons(sc,a,b) _cons(sc,a,b,1)
 
 int is_string(pointer p);
+int is_memblock(pointer p);
 char *string_value(pointer p);
 int is_number(pointer p);
 num nvalue(pointer p);

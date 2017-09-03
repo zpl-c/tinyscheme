@@ -153,6 +153,7 @@ pointer mk_real(scheme *sc, double num);
 pointer mk_symbol(scheme *sc, const char *name);
 pointer gensym(scheme *sc);
 pointer mk_string(scheme *sc, const char *str);
+pointer mk_memblock(scheme *sc, int len, char fill);
 pointer mk_counted_string(scheme *sc, const char *str, int len);
 pointer mk_empty_string(scheme *sc, int len, char fill);
 pointer mk_character(scheme *sc, int c);
@@ -176,6 +177,7 @@ struct scheme_interface {
   pointer (*mk_counted_string)(scheme *sc, const char *str, int len);
   pointer (*mk_character)(scheme *sc, int c);
   pointer (*mk_vector)(scheme *sc, int len);
+  pointer (*mk_memblock)(scheme *sc, int len, char fill);
   pointer (*mk_foreign_func)(scheme *sc, foreign_func f);
   void (*putstr)(scheme *sc, const char *s);
   void (*putcharacter)(scheme *sc, int c);
@@ -192,6 +194,7 @@ struct scheme_interface {
   long (*charvalue)(pointer p);
   int (*is_list)(scheme *sc, pointer p);
   int (*is_vector)(pointer p);
+  int (*is_memblock)(pointer p);
   int (*list_length)(scheme *sc, pointer vec);
   long (*vector_length)(pointer vec);
   void (*fill_vector)(pointer vec, pointer elem);
