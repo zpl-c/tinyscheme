@@ -19,6 +19,7 @@
 #endif
 #ifdef WIN32
 #define snprintf _snprintf
+# include <io.h>
 #endif
 #if USE_DL
 # include "dynload.h"
@@ -86,14 +87,6 @@ static int stricmp(const char *s1, const char *s2)
 #endif /* __APPLE__ */
 
 #if USE_STRLWR
-static const char *strlwr(char *s) {
-  const char *p=s;
-  while(*s) {
-    *s=tolower(*s);
-    s++;
-  }
-  return p;
-}
 #endif
 
 #ifndef prompt
@@ -4986,7 +4979,11 @@ int main(int argc, char **argv) {
   scheme_define(&sc,sc.global_env,mk_symbol(&sc,"load-extension"),mk_foreign_func(&sc, scm_load_ext));
 #endif
   argv++;
+#ifdef WIN32
+  if(_access(file_name,0)!=0) {
+#else
   if(access(file_name,0)!=0) {
+#endif
     char *p=getenv("TINYSCHEMEINIT");
     if(p!=0) {
       file_name=p;
