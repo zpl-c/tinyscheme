@@ -41,6 +41,337 @@
 
 (define *compile-hook* macro-expand-all)
 
+;;;; 
+;;;; START Features ported from DZMLang by D. Madarasz.
+;;;;
+
+(define nil '())
+
+(define (length items)
+  (define (iter a count)
+    (if (null? a)
+        count
+        (iter (cdr a) (+ 1 count))))
+  (iter items 0))
+
+(define (attach-tag type-tag contents)
+  (cons type-tag contents))
+
+(define (type-tag x)
+  (if (pair? x)
+      (car x)
+      (error "Bad tagged entity: TYPE-TAG" x)))
+
+(define (contents x)
+  (if (pair? x)
+      (cdr x)
+      (error "Bad tagged entity: CONTENT" x)))
+
+(define (count-leaves x)
+  (cond ((null? x) 0)
+        ((not (pair? x)) 1)
+        (else (+ (count-leaves (car x))
+                 (count-leaves (cdr x))))))
+
+(define (append list1 list2)
+  (if (null? list1)
+      list2
+      (cons (car list1) (append (cdr list1) list2))))
+
+(define (reverse l)
+  (define (iter in out)
+    (if (pair? in)
+        (iter (cdr in) (cons (car in) out))
+        out))
+  (iter l '()))
+
+(define (deep-reverse ls)
+  (define (iter ls acc)
+    (if (null? ls)
+        acc
+        (if (list? (car ls))
+            (iter (cdr ls) (cons (deep-reverse (car ls)) acc))
+            (iter (cdr ls) (cons (car ls) acc)))))
+  (iter ls '()))
+
+(define (flatten x)
+  (cond ((null? x) '())
+        ((pair? x) (append (flatten (car x)) (flatten (cdr x))))
+        (else (list x))))
+
+(define (reverse-string l)
+  (list->string (reverse (string->list l))))
+
+(define (tree-map proc tree)
+    (map (lambda (sub-tree)
+             (if (list? sub-tree)
+                 (tree-map proc sub-tree)
+                 (proc sub-tree)))
+             tree))
+
+(define (subsets ls)
+  (if (null? ls)
+      (list nil)
+      (let ((rest (subsets (cdr ls))))
+           (append rest (map (lambda (x)
+                               (cons (car ls) x))
+                             rest)))))
+
+(define (repeat f n)
+  (if (null? n)
+      #t
+      (begin
+        (f)
+        (repeat f (cdr n)))))
+
+(define (contains x l)
+  (cond ((nil? l) #f)
+        ((eq? x (car l)) #t)
+        (else (contains x (cdr l)))))
+
+(define (filter predicate sequence)
+  (cond ((null? sequence) nil)
+        ((predicate (car sequence))
+                    (cons (car sequence)
+                          (filter predicate
+                                  (cdr sequence))))
+                    (else (filter predicate
+                                  (cdr sequence)))))
+
+(define (accumulate op initial sequence)
+  (if (null? sequence)
+      initial
+      (op (car sequence)
+          (accumulate op
+                      initial
+                      (cdr sequence)))))
+(define acc accumulate)
+
+(define (enumerate-interval low high)
+  (if (> low high)
+      nil
+      (cons low
+            (enumerate-interval
+              (+ low 1)
+              high))))
+(define range enumerate-interval)
+
+(define (enumerate-tree tree)
+  (cond ((null? tree) nil)
+        ((not (list? tree)) (list tree))
+        (else (append
+                (enumerate-tree (car tree))
+                (enumerate-tree (cdr tree))))))
+(define for enumerate-tree)
+
+(define (id o) o)
+(define (flip f) (lambda (a b) (f b a)))
+
+(define (curry f a) (lambda (b) (apply f (cons a (list b)))))
+(define (compose f g) (lambda (a) (f (apply g a))))
+(define nil? null?)
+(define (new class params)
+  (cond
+   ((null? params) (class))
+   (else (apply class params))))
+
+(define (not x)
+  (if x #f #t))
+
+  (define (send message obj params)
+  (cond
+   ((or (null? obj) (null? message)) '())
+   ((null? params) (apply (obj message)))
+   (else (apply (obj message) params))))
+
+(define (last l)
+  (if (nil? (cdr l))
+    (car l)
+    (last (cdr l))))
+
+(define (last-pair l)
+  (if (nil? (cdr l))
+      l
+      (last-pair (cdr l))))
+
+(define (no-more? l)
+  (if (null? (car (cdr l)))
+      #t
+      #f))
+
+(define (remove n l)
+  (filter (lambda (x) (not (eqv? x n)))
+          l))
+
+(define (memq n x)
+  (cond ((null? x) #f)
+        ((eq? n (car x)) x)
+        (else (memq n (cdr x)))))
+
+(define (apply-generic op args)
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if proc
+          (apply proc (map contents args))
+          (error
+           "No method for these types:
+             APPLY-GENERIC"
+           (list op type-tags))))))
+
+
+;;; QUEUE
+ (define (make-queue)
+   (let ((front-ptr '())
+         (rear-ptr '()))
+         (define (empty-queue?) (null? front-ptr))
+         (define (set-front-ptr! item) (set! front-ptr item))
+         (define (set-rear-ptr! item) (set! rear-ptr item))
+         (define (front-queue)
+           (if (empty-queue?)
+             (error "FRONT called with an empty queue")
+             (car front-ptr)))
+         (define (insert-queue! item)
+           (let ((new-pair (cons item '())))
+             (cond ((empty-queue?)
+                     (set-front-ptr! new-pair)
+                     (set-rear-ptr! new-pair))
+                   (else
+                     (set-cdr! rear-ptr new-pair)
+                     (set-rear-ptr! new-pair)))))
+         (define (delete-queue!)
+           (cond ((empty-queue?)
+                   (error "DELETE called with an empty queue"))
+                 (else (set-front-ptr! (cdr front-ptr)))))
+         (define (print-queue) front-ptr)
+         (define (dispatch m)
+           (cond ((eq? m 'empty) empty-queue?)
+                 ((eq? m 'front) front-queue)
+                 ((eq? m 'insert!) insert-queue!)
+                 ((eq? m 'delete!) delete-queue!)
+                 ((eq? m 'print) print-queue)
+                 ((eq? m 'type-of) (lambda() 'queue))
+                 (else (error "undefined operation -- QUEUE" m))))
+         dispatch))
+
+;;; SET
+
+(define (make-set)
+  (let ((set '()))
+    (define (insert! x)
+      (if (null? set) (set! set (list x))
+          (insert-iter x set)))
+    (define (insert-iter x l)
+      (cond ((null? l) (list x))
+            ((= x (car l)) #t)
+            ((< x (car l)) (set! set (cons x l)))
+            (else (set! set (cons (car l) (insert-iter x (cdr l)))))))
+    (define (get) set)
+    (define (self m)
+      (cond ((eq? m 'insert!) insert!)
+            ((eq? m 'get) get)
+            ((eq? m 'type-of) (lambda() 'set))
+            (else (no-msg))))
+      self))
+
+;;; TABLE
+
+(define (fold-left op init seq)
+   (define (iter ans rest)
+     (if (null? rest)
+         ans
+         (iter (op ans (car rest))
+               (cdr rest))))
+   (iter init seq))
+
+ (define (make-table same-key?)
+   (define (associate key records)
+     (cond ((null? records) '())
+           ((same-key? key (caar records)) (car records))
+           (else (associate key (cdr records)))))
+
+   (let ((the-table (list '*table*)))
+     (define (lookup keys)
+       (define (lookup-record record-list key)
+         (if (not (null? record-list))
+             (let ((record (associate key record-list)))
+               (if (null? record)
+                   '()
+                   (cdr record)))
+             '()))
+       (fold-left lookup-record (cdr the-table) keys))
+
+     (define (insert! keys value)
+       (define (descend table key)
+         (let ((record (associate key (cdr table))))
+           (if (not (null? record))
+               record
+               (let ((new (cons (list key)
+                                (cdr table))))
+                 (set-cdr! table new)
+                 (car new)))))
+       (set-cdr! (fold-left descend the-table keys)
+                 value))
+
+     (define (print)
+       (define (indent tabs)
+         (for-each (lambda (x) (display "-")) (range 0 tabs)))
+
+       (define (print-record rec level)
+         (indent level)
+         (display (car rec))
+         (display ": ")
+         (if (list? (cdr rec))
+             (begin (newline)
+                    (print-table rec (+ level 1)))
+             (begin (display (cdr rec))
+                    (newline))))
+       (define (print-table table level)
+         (if (null? (cdr table))
+             (begin (display "-no entries-")
+                    (newline))
+             (for-each (lambda (record)
+                         (print-record record level))
+                       (cdr table))))
+       (print-table the-table 0))
+
+     (define (dispatch m)
+       (cond ((eq? m 'lookup) lookup)
+             ((eq? m 'update!) insert!)
+             ((eq? m 'insert!) insert!)
+             ((eq? m 'print) print)
+             ((eq? m 'the-table) the-table)
+             ((eq? m 'type-of) (lambda() 'table))
+             (else (error "Undefined method" m))))
+     dispatch))
+
+(macro (package form)
+               `(apply (lambda ()
+                         ,@(cdr form)
+                         (current-environment))))
+                         
+;;; GENERIC
+
+(define (char-lowercase x)
+  (if (and (>= (char->integer x) 65) (<= (char->integer x) 90))
+      (integer->char (+ (char->integer x) 32))
+      x))
+
+(define (char-uppercase x)
+  (if (and (>= (char->integer x) 97) (<= (char->integer x) 122))
+      (integer->char (- (char->integer x) 32))
+      x))
+
+(define (char-flipcase x)
+  (if (and (>= (char->integer x) 65) (<= (char->integer x) 90))
+      (char-lowercase x)
+      (char-uppercase x)))
+
+(define (no-msg) (error "Message not found!"))
+
+;;;;
+;;;; END
+;;;;
+
 
 (macro (unless form)
      `(if (not ,(cadr form)) (begin ,@(cddr form))))
