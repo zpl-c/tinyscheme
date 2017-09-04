@@ -105,7 +105,7 @@ extern "C" {
 #endif
 
 #ifndef USE_INTERFACE
-# define USE_INTERFACE 0
+# define USE_INTERFACE 1
 #endif
 
 #ifndef SHOW_ERROR_LINE   /* Show error line in file */

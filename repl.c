@@ -9,7 +9,7 @@
 
 #define JOIN2(a,b) a##b
 
-#define banner "TinyScheme 1.7.0"
+#define banner "TinyScheme 1.8.1"
 
 #if WIN32
 #include <io.h>
