@@ -70,6 +70,7 @@
 (define (abs n) (if (>= n 0) n (- n)))
 (define (exact->inexact n) (* n 1.0))
 (define (<> n1 n2) (not (= n1 n2)))
+(define (nth l n) (if (= n 0) (car l) (nth (cdr l) (1- n))))
 
 ; min and max must return inexact if any arg is inexact; use (+ n 0.0)
 (define (max . lst)
