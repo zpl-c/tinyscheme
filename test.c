@@ -4,7 +4,7 @@
 #define STANDALONE 0
 #include "scheme.h"
 #include "scheme-private.h"
-#include "scheme.c"
+//#include "scheme.c"
 
 pointer test_send_tuple(scheme *sc, pointer args) {
 	//                                                                                      (a b c NIL)

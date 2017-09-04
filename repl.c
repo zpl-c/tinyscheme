@@ -11,6 +11,10 @@
 
 #define banner "TinyScheme 1.5.1"
 
+#if WIN32
+#include <io.h>
+#endif
+
 
 #if defined(__APPLE__) && !defined (OSX)
 int main()
