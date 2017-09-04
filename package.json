@@ -1,6 +1,6 @@
 {
   "name": "tinyscheme.c",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "Scheme interpreter implementing R5RS being minimalistic and embeddable in C",
   "main": "scheme.c",
   "scripts": {

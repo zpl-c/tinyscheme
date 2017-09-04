@@ -1,7 +1,5 @@
 // Simple test
 
-#define USE_INTERFACE 1
-#define STANDALONE 0
 #include "scheme.h"
 #include "scheme-private.h"
 //#include "scheme.c"
