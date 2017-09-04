@@ -87,6 +87,8 @@
 
 (define (succ x) (+ x 1))
 (define (pred x) (- x 1))
+(define 1+ succ)
+(define 1- pred)
 (define gcd
   (lambda a
     (if (null? a)
