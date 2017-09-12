@@ -1,4 +1,4 @@
-/* T I N Y S C H E M E    1 . 5 . 1
+/* T I N Y S C H E M E    2 . 0 . 0
  *   Dominik Madarasz (contact@madaraszd.net)
  *   Dimitrios Souflis (dsouflis@acm.org)
  *   Based on MiniScheme (original credits follow)
