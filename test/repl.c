@@ -1,10 +1,10 @@
 #include "scheme.h"
 #include "scheme-private.h"
-#include "scheme.c"
+#include "../source/scheme.c"
 
 #ifndef InitFile
-# define InitFile "init.scm"
-# define UpperInitFile "../init.scm"
+# define InitFile "libs/init.scm"
+# define UpperInitFile "../libs/init.scm"
 #endif
 
 #define JOIN2(a,b) a##b

@@ -36,9 +36,9 @@ int main(void) {
   	scheme_set_output_port_file(sc, stdout);
 
 	// Load init.scm (make sure it's in workdir)
-	char *cinit = "init.scm";
+	char *cinit = "libs/init.scm";
 	FILE *finit = fopen(cinit, "r");
-	if (!finit) { cinit = "../init.scm"; finit = fopen(cinit, "r"); }
+	if (!finit) { cinit = "../libs/init.scm"; finit = fopen(cinit, "r"); }
 	scheme_load_file(sc, finit);
 	fclose(finit);
 
