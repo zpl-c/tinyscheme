@@ -32,11 +32,12 @@
 ;;
 ;;(module test (a c) (define a 42) (define b 43) (define c 44))
 
-
+;; OVERWRITE if path is different
+(define module-default-path "libs/")
 
 ;;; emulation of Chicken's import procedures
 ;;;
 ;;; usage: (import module-name)
 ;;;        which maps to (load "module-name.scm")
 (define-macro (import module-name)
-  `(load (string-append (symbol->string (quote ,module-name)) ".scm")))
+  `(load (string-append module-default-path (symbol->string (quote ,module-name)) ".scm")))

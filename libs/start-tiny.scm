@@ -1,18 +1,9 @@
 ;;;; startup environment for TinyScheme
 
+(load "libs/init.scm")
+
 ;; load module emulation adapted from ChickenScheme
-(load "tinymodules.scm")
+(load "libs/tinymodules.scm")
 
-;; import general utitlities (Clojure, SRFI, etc.)
-(import utils)
-
-;; JSON library
-(import json)
-
-;; parameter parser
-(import params)
-
-
-;; load the sample program
-(load "test-params.scm")
-
+;; import general utilities (Clojure, SRFI, etc.)
+(load "libs/utils.scm")

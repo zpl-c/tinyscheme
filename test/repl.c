@@ -1,15 +1,19 @@
+//
+// TinyScheme REPL
+// 
+
 #include "scheme.h"
 #include "scheme-private.h"
 #include "../source/scheme.c"
 
 #ifndef InitFile
-# define InitFile "libs/init.scm"
-# define UpperInitFile "../libs/init.scm"
+# define InitFile "libs/start-tiny.scm"
+# define UpperInitFile "../libs/start-tiny.scm"
 #endif
 
 #define JOIN2(a,b) a##b
 
-#define banner "TinyScheme 2.0.0"
+#define banner "TinyScheme 2.0.1"
 
 #if WIN32
 #include <io.h>
