@@ -42,6 +42,7 @@ extern "C" {
 # define USE_COLON_HOOK 0
 # define USE_DL 0
 # define USE_PLIST 0
+# define USE_JSON 0
 #endif
 
 /*
@@ -49,6 +50,10 @@ extern "C" {
  * Undefine it if you only care about faster speed and not strict Scheme compatibility.
  */
 #define USE_SCHEME_STACK
+
+#ifndef USE_DL
+# define USE_DL 1
+#endif
 
 #if USE_DL
 # define USE_INTERFACE 1
@@ -77,6 +82,10 @@ extern "C" {
 
 #ifndef USE_PLIST
 # define USE_PLIST 1
+#endif
+
+#ifndef USE_JSON
+# define USE_JSON 1
 #endif
 
 /* To force system errors through user-defined error handling (see *error-hook*) */

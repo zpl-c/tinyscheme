@@ -5,13 +5,15 @@ find_package(Threads)
 
 add_definitions(-Wno-pointer-to-int-cast -Wno-int-to-pointer-cast)
 
-add_executable(tinyscheme.repl test/repl.c)
+add_executable(tinyscheme.repl test/repl.c source/dynload.c)
 add_executable(tinyscheme.test test/test.c)
 
-include_directories(include)
+include_directories(include
+	node_modules/zpl.c/include
+	node_modules/zpl_json.c/include)
 
-add_library(tinyscheme.static STATIC source/scheme.c)
-add_library(tinyscheme SHARED source/scheme.c)
+add_library(tinyscheme.static STATIC source/scheme.c source/dynload.c)
+add_library(tinyscheme SHARED source/scheme.c source/dynload.c)
 
 target_link_libraries(tinyscheme                        ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(tinyscheme.repl                   ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT})

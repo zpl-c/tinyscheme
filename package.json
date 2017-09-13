@@ -1,6 +1,6 @@
 {
   "name": "tinyscheme.c",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Scheme interpreter implementing R5RS being minimalistic and embeddable in C",
   "main": "scheme.c",
   "scripts": {
@@ -21,5 +21,6 @@
   "bugs": {
     "url": "https://github.com/zpl-c/tinyscheme/issues"
   },
-  "homepage": "https://github.com/zpl-c/tinyscheme#readme"
+  "homepage": "https://github.com/zpl-c/tinyscheme#readme",
+  "dependencies": {}
 }
