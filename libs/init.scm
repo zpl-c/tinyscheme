@@ -1184,3 +1184,12 @@
 
 (define (unzip lsts)
   (apply map list lsts))
+
+(define (alist-cons key datum alist)
+  (cons (cons key datum) alist))
+
+(define (alist-copy alist)
+  (map (lambda (el) (cons (car el) (cdr el))) alist))
+
+(define (alist-delete key alist)
+  (filter (lambda (x) (not (eqv? key (car x)))) alist))
