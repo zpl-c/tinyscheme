@@ -1,4 +1,4 @@
-/* T I N Y S C H E M E    2 . 0 . 0
+/* T I N Y S C H E M E 
  *   Dominik Madarasz (contact@madaraszd.net)
  *   Dimitrios Souflis (dsouflis@acm.org)
  *   Based on MiniScheme (original credits follow)
@@ -3663,6 +3663,8 @@ static pointer opexe_3(scheme *sc, enum scheme_opcodes op) {
           s_retbool(is_string(car(sc->args)));
      case OP_INTEGERP:     /* integer? */
           s_retbool(is_integer(car(sc->args)));
+     case OP_PROMISEP:
+          s_retbool(is_promise(car(sc->args)));
      case OP_REALP:     /* real? */
           s_retbool(is_number(car(sc->args))); /* All numbers are real */
      case OP_CHARP:     /* char? */

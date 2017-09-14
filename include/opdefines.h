@@ -115,6 +115,7 @@
     _OP_DEF(opexe_3, "number?",                        1,  1,       TST_ANY,                         OP_NUMBERP          )
     _OP_DEF(opexe_3, "string?",                        1,  1,       TST_ANY,                         OP_STRINGP          )
     _OP_DEF(opexe_3, "integer?",                       1,  1,       TST_ANY,                         OP_INTEGERP         )
+    _OP_DEF(opexe_3, "promise?",                       1,  1,       TST_ANY,                         OP_PROMISEP         )
     _OP_DEF(opexe_3, "real?",                          1,  1,       TST_ANY,                         OP_REALP            )
     _OP_DEF(opexe_3, "char?",                          1,  1,       TST_ANY,                         OP_CHARP            )
 #if USE_CHAR_CLASSIFIERS

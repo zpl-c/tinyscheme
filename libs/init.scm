@@ -47,7 +47,7 @@
 
 (define nil '())
 
-(define (length items)
+(define (length@ items)
   (if (proper-list? items)
       (begin
         (define (iter a count)
@@ -1025,6 +1025,7 @@
              (* (quotient *seed* q) r)))
     (if (< *seed* 0) (set! *seed* (+ *seed* m)))
     *seed*))
+
 ;; SRFI-0
 ;; COND-EXPAND
 ;; Implemented as a macro
@@ -1062,11 +1063,14 @@
 
 (gc-verbose #f)
 
+(define (add-feature x)
+  (set! *features* (append *features* (list x))))
+
 
 ;; 
 ;; SRFI-1
 ;;
-(set! *features* (cons *features* 'srfi-1))
+(add-feature 'srfi-1)
 
 (define (xcons x y)
   (cons y x))
@@ -1193,3 +1197,40 @@
 
 (define (alist-delete key alist)
   (filter (lambda (x) (not (eqv? key (car x)))) alist))
+
+;; 
+;; SRFI-111
+;;
+(add-feature 'srfi-111)
+
+(define %true-pair? pair?)
+(define %box-flag 'box-flag)
+(define (box? x) (and (%true-pair? x) (eq? (cdr x) %box-flag)))
+(define (box  x) (cons x %box-flag))
+
+(define (unbox x)
+  (if (box? x)
+      (car x)
+      (error "Attempt to unbox non-box")))
+
+(define (set-box! x v)
+  (if (box? x)
+      (set-car! x v)
+      (error "Attempt to mutate non-box")))
+
+(define pair?
+  (lambda (x)
+    (and (%true-pair? x) (not (box? x)))))
+
+;;
+;; SRFI-155
+;; IMPLEMENTED AS LANGUAGE FEATURE
+;;
+(add-feature 'srfi-155)
+
+(define (delay-force x) (delay (force x)))
+
+(define (make-promise x)
+  (if (promise? x)
+      x
+      (delay x)))
