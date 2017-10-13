@@ -3,7 +3,9 @@ project(tinyscheme)
 
 find_package(Threads)
 
+if (NOT MSVC)
 add_definitions(-Wno-pointer-to-int-cast -Wno-int-to-pointer-cast)
+endif ()
 
 add_executable(tinyscheme.repl test/repl.c source/dynload.c)
 add_executable(tinyscheme.test test/test.c)

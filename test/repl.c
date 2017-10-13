@@ -33,7 +33,7 @@ int MacTS_main(int argc, char **argv) {
 #else
 int main(int argc, char **argv) {
 #endif
-  scheme sc;
+	scheme sc = { 0 };
   FILE *fin;
   char *file_name=InitFile;
   int retcode;

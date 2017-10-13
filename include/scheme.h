@@ -26,9 +26,9 @@ extern "C" {
 # define USE_STRCASECMP 0
 # define USE_STRLWR 0
 # ifdef _SCHEME_SOURCE
-#  define SCHEME_EXPORT __declspec(dllexport)
+#  define SCHEME_EXPORT 
 # else
-#  define SCHEME_EXPORT __declspec(dllimport)
+#  define SCHEME_EXPORT 
 # endif
 #endif
 

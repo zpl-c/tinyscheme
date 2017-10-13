@@ -28,6 +28,10 @@
 # include <math.h>
 #endif
 
+#ifdef _MSC_VER
+typedef size_t off_t;
+#endif
+
 #include <limits.h>
 #include <float.h>
 #include <ctype.h>
