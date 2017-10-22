@@ -28,13 +28,13 @@
 # include <math.h>
 #endif
 
-#ifdef _MSC_VER
-typedef size_t off_t;
-#endif
-
 #include <limits.h>
 #include <float.h>
 #include <ctype.h>
+
+#ifdef _MSC_VER
+typedef int64_t off_t;
+#endif
 
 #if USE_STRCASECMP
 #include <strings.h>
@@ -187,13 +187,13 @@ INTERFACE INLINE int is_real(pointer p) {
 INTERFACE INLINE int is_character(pointer p) { return (type(p)==T_CHARACTER); }
 INTERFACE INLINE char *string_value(pointer p) { return strvalue(p); }
 INLINE num nvalue(pointer p)       { return ((p)->_object._number); }
-INTERFACE long ivalue(pointer p)      { return (num_is_integer(p)?(p)->_object._number.value.ivalue:(long)(p)->_object._number.value.rvalue); }
+INTERFACE int64_t ivalue(pointer p)      { return (num_is_integer(p)?(p)->_object._number.value.ivalue:(int64_t)(p)->_object._number.value.rvalue); }
 INTERFACE double rvalue(pointer p)    { return (!num_is_integer(p)?(p)->_object._number.value.rvalue:(double)(p)->_object._number.value.ivalue); }
 #define ivalue_unchecked(p)       ((p)->_object._number.value.ivalue)
 #define rvalue_unchecked(p)       ((p)->_object._number.value.rvalue)
 #define set_num_integer(p)   (p)->_object._number.is_fixnum=1;
 #define set_num_real(p)      (p)->_object._number.is_fixnum=0;
-INTERFACE  long charvalue(pointer p)  { return ivalue_unchecked(p); }
+INTERFACE  int64_t charvalue(pointer p)  { return ivalue_unchecked(p); }
 
 INTERFACE INLINE int is_port(pointer p)     { return (type(p)==T_PORT); }
 INTERFACE INLINE int is_inport(pointer p)  { return is_port(p) && p->_object._port->kind & port_input; }
@@ -324,7 +324,7 @@ static void file_pop(scheme *sc);
 static int file_interactive(scheme *sc);
 static INLINE int is_one_of(char *s, int c);
 static int alloc_cellseg(scheme *sc, int n);
-static long binary_decode(const char *s);
+static int64_t binary_decode(const char *s);
 static INLINE pointer get_cell(scheme *sc, pointer a, pointer b);
 static pointer _get_cell(scheme *sc, pointer a, pointer b);
 static pointer reserve_cells(scheme *sc, int n);
@@ -377,7 +377,7 @@ static void assign_syntax(scheme *sc, char *name);
 static int syntaxnum(pointer p);
 static void assign_proc(scheme *sc, enum scheme_opcodes, char *name);
 
-#define num_ivalue(n)       (n.is_fixnum?(n).value.ivalue:(long)(n).value.rvalue)
+#define num_ivalue(n)       (n.is_fixnum?(n).value.ivalue:(int64_t)(n).value.rvalue)
 #define num_rvalue(n)       (!n.is_fixnum?(n).value.rvalue:(double)(n).value.ivalue)
 
 static num num_add(num a, num b) {
@@ -437,7 +437,7 @@ static num num_sub(num a, num b) {
 
 static num num_rem(num a, num b) {
  num ret;
- long e1, e2, res;
+ int64_t e1, e2, res;
  ret.is_fixnum=a.is_fixnum && b.is_fixnum;
  e1=num_ivalue(a);
  e2=num_ivalue(b);
@@ -458,7 +458,7 @@ static num num_rem(num a, num b) {
 
 static num num_mod(num a, num b) {
  num ret;
- long e1, e2, res;
+ int64_t e1, e2, res;
  ret.is_fixnum=a.is_fixnum && b.is_fixnum;
  e1=num_ivalue(a);
  e2=num_ivalue(b);
@@ -538,8 +538,8 @@ static int is_zero_double(double x) {
  return x<DBL_MIN && x>-DBL_MIN;
 }
 
-static long binary_decode(const char *s) {
- long x=0;
+static int64_t binary_decode(const char *s) {
+ int64_t x=0;
 
  while(*s!=0 && (*s=='1' || *s=='0')) {
      x<<=1;
@@ -556,7 +556,7 @@ static int alloc_cellseg(scheme *sc, int n) {
      pointer last;
      pointer p;
      char *cp;
-     long i;
+     int64_t i;
      int k;
      int adj=ADJ;
 
@@ -573,8 +573,8 @@ static int alloc_cellseg(scheme *sc, int n) {
          i = ++sc->last_cell_seg ;
          sc->alloc_seg[i] = cp;
          /* adjust in TYPE_BITS-bit boundary */
-         if(((unsigned long)cp)%adj!=0) {
-           cp=(char*)(adj*((unsigned long)cp/adj+1));
+         if(((uint64_t)cp)%adj!=0) {
+           cp=(char*)(adj*((uint64_t)cp/adj+1));
          }
          /* insert new segment in address order */
          newp=(pointer)cp;
@@ -934,7 +934,7 @@ INTERFACE pointer mk_character(scheme *sc, int c) {
 }
 
 /* get number atom (integer) */
-INTERFACE pointer mk_integer(scheme *sc, long num) {
+INTERFACE pointer mk_integer(scheme *sc, int64_t num) {
   pointer x = get_cell(sc,sc->NIL, sc->NIL);
 
   typeflag(x) = (T_NUMBER | T_ATOM);
@@ -1134,7 +1134,7 @@ static pointer mk_atom(scheme *sc, char *q) {
 
 /* make constant */
 static pointer mk_sharp_const(scheme *sc, char *name) {
-     long    x;
+     int64_t    x;
      char    tmp[STRBUFFSIZE];
 
      if (!strcmp(name, "t"))
@@ -1143,14 +1143,14 @@ static pointer mk_sharp_const(scheme *sc, char *name) {
           return (sc->F);
      else if (*name == 'o') {/* #o (octal) */
           snprintf(tmp, STRBUFFSIZE, "0%s", name+1);
-          sscanf(tmp, "%lo", (long unsigned *)&x);
+          sscanf(tmp, "%lo", (uint64_t *)&x);
           return (mk_integer(sc, x));
      } else if (*name == 'd') {    /* #d (decimal) */
-          sscanf(name+1, "%ld", (long int *)&x);
+          sscanf(name+1, "%ld", (uint64_t *)&x);
           return (mk_integer(sc, x));
      } else if (*name == 'x') {    /* #x (hex) */
           snprintf(tmp, STRBUFFSIZE, "0x%s", name+1);
-          sscanf(tmp, "%lx", (long unsigned *)&x);
+          sscanf(tmp, "%lx", (uint64_t *)&x);
           return (mk_integer(sc, x));
      } else if (*name == 'b') {    /* #b (binary) */
           x = binary_decode(name+1);
@@ -1937,7 +1937,7 @@ static void atom2str(scheme *sc, pointer l, int f, char **pp, int *plen) {
                    }
               }
           } else {
-              long v = ivalue(l);
+              int64_t v = ivalue(l);
               if (f == 16) {
                   if (v >= 0)
                     snprintf(p, STRBUFFSIZE, "%lx", v);
@@ -1949,7 +1949,7 @@ static void atom2str(scheme *sc, pointer l, int f, char **pp, int *plen) {
                   else
                     snprintf(p, STRBUFFSIZE, "-%lo", -v);
               } else if (f == 2) {
-                  unsigned long b = (v < 0) ? -v : v;
+                  uint64_t b = (v < 0) ? -v : v;
                   p = &p[STRBUFFSIZE-1];
                   *p = 0;
                   do { *--p = (b&1) ? '1' : '0'; b >>= 1; } while (b != 0);
@@ -2465,7 +2465,7 @@ static pointer _s_return(scheme *sc, pointer a) {
 static void s_save(scheme *sc, enum scheme_opcodes op, pointer args, pointer code) {
     sc->dump = cons(sc, sc->envir, cons(sc, (code), sc->dump));
     sc->dump = cons(sc, (args), sc->dump);
-    sc->dump = cons(sc, mk_integer(sc, (long)(op)), sc->dump);
+    sc->dump = cons(sc, mk_integer(sc, (int64_t)(op)), sc->dump);
 }
 
 static INLINE void dump_stack_mark(scheme *sc)
@@ -3171,8 +3171,8 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op) {
           /* If the test fails, result is too big for integer. */
           if (!real_result)
           {
-            long result_as_long = (long)result;
-            if (result != (double)result_as_long)
+            int64_t result_as_int64_t = (int64_t)result;
+            if (result != (double)result_as_int64_t)
               real_result = 1;
           }
           if (real_result) {
@@ -3344,7 +3344,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op) {
 
      case OP_STR2ATOM: /* string->atom */ {
           char *s=strvalue(car(sc->args));
-          long pf = 0;
+          int64_t pf = 0;
           if(cdr(sc->args)!=sc->NIL) {
             /* we know cadr(sc->args) is a natural number */
             /* see if it is 2, 8, 10, or 16, or error */
@@ -3366,7 +3366,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op) {
             }
             else {
               char *ep;
-              long iv = strtol(s,&ep,(int )pf);
+              int64_t iv = strtol(s,&ep,(int )pf);
               if (*ep == 0) {
                 s_return(sc, mk_integer(sc, iv));
               }
@@ -3383,7 +3383,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op) {
           s_return(sc,x);
 
      case OP_ATOM2STR: /* atom->string */ {
-          long pf = 0;
+          int64_t pf = 0;
           x=car(sc->args);
           if(cdr(sc->args)!=sc->NIL) {
             /* we know cadr(sc->args) is a natural number */
@@ -4275,7 +4275,7 @@ static pointer opexe_5(scheme *sc, enum scheme_opcodes op) {
 
 static pointer opexe_6(scheme *sc, enum scheme_opcodes op) {
      pointer x, y;
-     long v;
+     int64_t v;
 
      switch (op) {
      case OP_LIST_LENGTH:     /* length */   /* a.k */
@@ -4494,7 +4494,7 @@ static pointer mk_proc(scheme *sc, enum scheme_opcodes op) {
 
      y = get_cell(sc, sc->NIL, sc->NIL);
      typeflag(y) = (T_PROC | T_ATOM);
-     ivalue_unchecked(y) = (long) op;
+     ivalue_unchecked(y) = (int64_t) op;
      set_num_integer(y);
      return y;
 }
@@ -4609,6 +4609,8 @@ struct scheme_interface vtbl ={
 
 scheme *scheme_init_new() {
   scheme *sc=(scheme*)malloc(sizeof(scheme));
+  scheme sc_ = {0};
+  *sc = sc_;
   if(!scheme_init(sc)) {
     free(sc);
     return 0;
@@ -4754,6 +4756,8 @@ void scheme_set_external_data(scheme *sc, void *p) {
 }
 
 void scheme_deinit(scheme *sc) {
+	if (!sc) return;
+
   int i;
 
 #if SHOW_ERROR_LINE

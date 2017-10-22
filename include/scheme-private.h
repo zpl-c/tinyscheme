@@ -110,7 +110,7 @@ pointer SHARP_HOOK;  /* *sharp-hook* */
 pointer COMPILE_HOOK;  /* *compile-hook* */
 
 pointer free_cell;       /* pointer to top of free cells */
-long    fcells;          /* # of free cells */
+int64_t    fcells;          /* # of free cells */
 
 pointer inport;
 pointer outport;
@@ -138,7 +138,7 @@ pointer value;
 int op;
 
 void *ext_data;     /* For the benefit of foreign functions */
-long gensym_cnt;
+int64_t gensym_cnt;
 
 struct scheme_interface *vptr;
 void *dump_base;    /* pointer to base of allocated dump stack */
@@ -160,12 +160,12 @@ int is_string(pointer p);
 char *string_value(pointer p);
 int is_number(pointer p);
 num nvalue(pointer p);
-long ivalue(pointer p);
+int64_t ivalue(pointer p);
 double rvalue(pointer p);
 int is_integer(pointer p);
 int is_real(pointer p);
 int is_character(pointer p);
-long charvalue(pointer p);
+int64_t charvalue(pointer p);
 int is_vector(pointer p);
 
 int is_port(pointer p);

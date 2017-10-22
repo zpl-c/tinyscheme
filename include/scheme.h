@@ -4,6 +4,7 @@
 #define _SCHEME_H
 
 #include <stdio.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,9 +27,9 @@ extern "C" {
 # define USE_STRCASECMP 0
 # define USE_STRLWR 0
 # ifdef _SCHEME_SOURCE
-#  define SCHEME_EXPORT 
+#  define SCHEME_EXPORT
 # else
-#  define SCHEME_EXPORT 
+#  define SCHEME_EXPORT
 # endif
 #endif
 
@@ -88,6 +89,10 @@ extern "C" {
 # define USE_JSON 1
 #endif
 
+#ifndef USE_MACRO
+# define USE_MACRO 1
+#endif
+
 /* To force system errors through user-defined error handling (see *error-hook*) */
 #ifndef USE_ERROR_HOOK
 # define USE_ERROR_HOOK 1
@@ -131,7 +136,7 @@ typedef void (*func_dealloc)(void *);
 typedef struct num {
      char is_fixnum;
      union {
-          long ivalue;
+          int64_t ivalue;
           double rvalue;
      } value;
 } num;
@@ -157,7 +162,7 @@ SCHEME_EXPORT void scheme_define(scheme *sc, pointer env, pointer symbol, pointe
 typedef pointer (*foreign_func)(scheme *, pointer);
 
 pointer _cons(scheme *sc, pointer a, pointer b, int immutable);
-pointer mk_integer(scheme *sc, long num);
+pointer mk_integer(scheme *sc, int64_t num);
 pointer mk_real(scheme *sc, double num);
 pointer mk_symbol(scheme *sc, const char *name);
 pointer gensym(scheme *sc);
@@ -177,7 +182,7 @@ struct scheme_interface {
   pointer (*cons)(scheme *sc, pointer a, pointer b);
   pointer (*immutable_cons)(scheme *sc, pointer a, pointer b);
   pointer (*reserve_cells)(scheme *sc, int n);
-  pointer (*mk_integer)(scheme *sc, long num);
+  pointer (*mk_integer)(scheme *sc, int64_t num);
   pointer (*mk_real)(scheme *sc, double num);
   pointer (*mk_symbol)(scheme *sc, const char *name);
   pointer (*gensym)(scheme *sc);
@@ -193,16 +198,16 @@ struct scheme_interface {
   char *(*string_value)(pointer p);
   int (*is_number)(pointer p);
   num (*nvalue)(pointer p);
-  long (*ivalue)(pointer p);
+  int64_t (*ivalue)(pointer p);
   double (*rvalue)(pointer p);
   int (*is_integer)(pointer p);
   int (*is_real)(pointer p);
   int (*is_character)(pointer p);
-  long (*charvalue)(pointer p);
+  int64_t (*charvalue)(pointer p);
   int (*is_list)(scheme *sc, pointer p);
   int (*is_vector)(pointer p);
   int (*list_length)(scheme *sc, pointer vec);
-  long (*vector_length)(pointer vec);
+  int64_t (*vector_length)(pointer vec);
   void (*fill_vector)(pointer vec, pointer elem);
   pointer (*vector_elem)(pointer vec, int ielem);
   pointer (*set_vector_elem)(pointer vec, int ielem, pointer newel);

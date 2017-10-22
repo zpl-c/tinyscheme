@@ -7,6 +7,22 @@ if (NOT MSVC)
 add_definitions(-Wno-pointer-to-int-cast -Wno-int-to-pointer-cast)
 endif ()
 
+# special flags for MSVC
+if (MSVC OR "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
+
+    set(CompilerFlags
+        CMAKE_CXX_FLAGS
+        CMAKE_CXX_FLAGS_DEBUG
+        CMAKE_CXX_FLAGS_RELEASE
+        CMAKE_C_FLAGS
+        CMAKE_C_FLAGS_DEBUG
+        CMAKE_C_FLAGS_RELEASE
+    )
+    foreach(CompilerFlag ${CompilerFlags})
+      string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
+    endforeach()
+endif()
+
 add_executable(tinyscheme_repl test/repl.c source/dynload.c)
 add_executable(tinyscheme_test test/test.c)
 
