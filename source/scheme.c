@@ -28,13 +28,13 @@
 # include <math.h>
 #endif
 
+#ifdef _MSC_VER
+typedef size_t off_t;
+#endif
+
 #include <limits.h>
 #include <float.h>
 #include <ctype.h>
-
-#ifdef _MSC_VER
-typedef int64_t off_t;
-#endif
 
 #if USE_STRCASECMP
 #include <strings.h>
@@ -187,7 +187,7 @@ INTERFACE INLINE int is_real(pointer p) {
 INTERFACE INLINE int is_character(pointer p) { return (type(p)==T_CHARACTER); }
 INTERFACE INLINE char *string_value(pointer p) { return strvalue(p); }
 INLINE num nvalue(pointer p)       { return ((p)->_object._number); }
-INTERFACE int64_t ivalue(pointer p)      { return (num_is_integer(p)?(p)->_object._number.value.ivalue:(int64_t)(p)->_object._number.value.rvalue); }
+INTERFACE int64_t ivalue(pointer p)      { return (num_is_integer(p)?(p)->_object._number.value.ivalue:(long)(p)->_object._number.value.rvalue); }
 INTERFACE double rvalue(pointer p)    { return (!num_is_integer(p)?(p)->_object._number.value.rvalue:(double)(p)->_object._number.value.ivalue); }
 #define ivalue_unchecked(p)       ((p)->_object._number.value.ivalue)
 #define rvalue_unchecked(p)       ((p)->_object._number.value.rvalue)
@@ -377,7 +377,7 @@ static void assign_syntax(scheme *sc, char *name);
 static int syntaxnum(pointer p);
 static void assign_proc(scheme *sc, enum scheme_opcodes, char *name);
 
-#define num_ivalue(n)       (n.is_fixnum?(n).value.ivalue:(int64_t)(n).value.rvalue)
+#define num_ivalue(n)       (n.is_fixnum?(n).value.ivalue:(long)(n).value.rvalue)
 #define num_rvalue(n)       (!n.is_fixnum?(n).value.rvalue:(double)(n).value.ivalue)
 
 static num num_add(num a, num b) {
@@ -1143,14 +1143,14 @@ static pointer mk_sharp_const(scheme *sc, char *name) {
           return (sc->F);
      else if (*name == 'o') {/* #o (octal) */
           snprintf(tmp, STRBUFFSIZE, "0%s", name+1);
-          sscanf(tmp, "%lo", (uint64_t *)&x);
+          sscanf(tmp, "%lo", (uint64_t*)&x);
           return (mk_integer(sc, x));
      } else if (*name == 'd') {    /* #d (decimal) */
-          sscanf(name+1, "%ld", (uint64_t *)&x);
+          sscanf(name+1, "%ld", (uint64_t*)&x);
           return (mk_integer(sc, x));
      } else if (*name == 'x') {    /* #x (hex) */
           snprintf(tmp, STRBUFFSIZE, "0x%s", name+1);
-          sscanf(tmp, "%lx", (uint64_t *)&x);
+          sscanf(tmp, "%lx", (uint64_t*)&x);
           return (mk_integer(sc, x));
      } else if (*name == 'b') {    /* #b (binary) */
           x = binary_decode(name+1);
@@ -2465,7 +2465,7 @@ static pointer _s_return(scheme *sc, pointer a) {
 static void s_save(scheme *sc, enum scheme_opcodes op, pointer args, pointer code) {
     sc->dump = cons(sc, sc->envir, cons(sc, (code), sc->dump));
     sc->dump = cons(sc, (args), sc->dump);
-    sc->dump = cons(sc, mk_integer(sc, (int64_t)(op)), sc->dump);
+    sc->dump = cons(sc, mk_integer(sc, (long)(op)), sc->dump);
 }
 
 static INLINE void dump_stack_mark(scheme *sc)
@@ -3171,8 +3171,8 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op) {
           /* If the test fails, result is too big for integer. */
           if (!real_result)
           {
-            int64_t result_as_int64_t = (int64_t)result;
-            if (result != (double)result_as_int64_t)
+            int64_t result_as_long = (long)result;
+            if (result != (double)result_as_long)
               real_result = 1;
           }
           if (real_result) {
@@ -4494,7 +4494,7 @@ static pointer mk_proc(scheme *sc, enum scheme_opcodes op) {
 
      y = get_cell(sc, sc->NIL, sc->NIL);
      typeflag(y) = (T_PROC | T_ATOM);
-     ivalue_unchecked(y) = (int64_t) op;
+     ivalue_unchecked(y) = (long) op;
      set_num_integer(y);
      return y;
 }
