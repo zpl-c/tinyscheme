@@ -17,6 +17,18 @@
 #include "scheme-private.h"
 #ifndef WIN32
 # include <unistd.h>
+# include <ctype.h>
+# include <string.h>
+
+char *strlwr(char *str) {
+    unsigned char *p = (unsigned char *)str;
+    while (*p) {
+         *p = tolower((unsigned char)*p);
+         p++;
+    }
+    return str;
+}
+
 #endif
 #ifdef WIN32
 #define snprintf _snprintf
